@@ -1,0 +1,25 @@
+задание 1 (в ком строке Linux)
+touch text.txt
+cat >> text.txt << EOF
+строка 1
+строка 2
+строка 3
+ЕOF
+
+задание 2
+touch paket.sh
+
+в файле paket.sh:
+mkdir papka
+cd papka
+touch text.txt
+echo "stroka 1" >> text.txt
+touch file.txt
+rm file.txt
+rm text.txt
+cd ..
+rmdir papka
+сделать файл исполняемым:
+chmod +x command_package.sh
+запуск:
+./paket.sh
