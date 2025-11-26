@@ -1,0 +1,128 @@
+REM  ***** BASIC  *****
+Option Explicit
+'Макрос для Libre Office
+'1. Подсчет таблиц, рисунков и формул 
+Sub CountElementsLO()
+    Dim oDoc As Object
+    Dim tablesCount As Long
+    Dim imagesCount As Long
+    Dim formulasCount As Long
+    Dim oEmbeds As Object
+    Dim i As Long
+    Dim x As Object
+    
+    oDoc = ThisComponent
+    
+    tablesCount = oDoc.TextTables.Count
+    
+    imagesCount = oDoc.GraphicObjects.Count
+    
+    formulasCount = 0
+    oEmbeds = oDoc.EmbeddedObjects
+    For i = 0 To oEmbeds.Count - 1
+        x = oEmbeds.getByIndex(i)
+        ' Проверяем, является ли объект формулой Math
+        If x.CLSID = "078B7ABA-54FC-457F-8551-6147e776a997" Then 
+            formulasCount = formulasCount + 1
+        End If
+    Next i
+    
+    MsgBox "Таблиц: " & tablesCount & Chr(13) & _
+           "Рисунков: " & imagesCount & Chr(13) & _
+           "Формул: " & formulasCount, 64, "Статистика"
+End Sub
+
+Sub DeleteFirstSentenceLO()
+    Dim oDoc As Object
+    Dim oEnum As Object
+    Dim oPara As Object
+    Dim oText As Object
+    Dim oCursor As Object
+    
+    oDoc = ThisComponent
+    oEnum = oDoc.Text.createEnumeration()
+    
+    While oEnum.hasMoreElements()
+        oPara = oEnum.nextElement()
+        
+        If oPara.supportsService("com.sun.star.text.Paragraph") Then
+            
+            ' 1. Получаем объект текста, которому принадлежит абзац
+            oText = oPara.getText()
+            
+            ' 2. Создаем курсор на основе диапазона этого абзаца
+            oCursor = oText.createTextCursorByRange(oPara.getAnchor())
+            
+            ' 3. Перемещаем курсор в самое начало абзаца
+            oCursor.collapseToStart()
+            
+            ' 4. Выделяем первое предложение
+            If oCursor.gotoEndOfSentence(True) Then
+                
+                ' Удаляем текст предложения
+                oCursor.String = ""
+                
+
+                If oCursor.goRight(1, True) Then
+                    If oCursor.String = " " Then 
+                        oCursor.String = "" 
+                    Else
+                        ' снимаем выделение
+                        oCursor.collapseToStart()
+                    End If
+                End If
+            End If
+        End If
+    Wend
+    
+    MsgBox "Первые предложения удалены.", 64, "Готово"
+End Sub
+
+'3. Выравнивание рисунков по центру
+Sub CenterImagesLO()
+    Dim oDoc As Object
+    Dim oGraphics As Object
+    Dim oGraph As Object
+    Dim i As Long
+    
+    oDoc = ThisComponent
+    oGraphics = oDoc.GraphicObjects
+    
+    For i = 0 To oGraphics.Count - 1
+        oGraph = oGraphics.getByIndex(i)
+        ' Устанавливаем выравнивание по центру
+        oGraph.HoriOrient = com.sun.star.text.HoriOrientation.CENTER
+    Next i
+    
+    MsgBox "Все рисунки выровнены по центру.", 64, "Готово"
+End Sub
+
+' 4. Разные стили для четных и нечетных абзацев 
+Sub FormatOddEvenLO()
+    Dim oDoc As Object
+    Dim oEnum As Object
+    Dim oTextElement As Object
+    Dim i As Long
+    
+    Dim styleOdd As String : styleOdd = "Standard"       ' Для нечетных
+    Dim styleEven As String : styleEven = "Text body"    ' Для четных
+    
+    oDoc = ThisComponent
+    oEnum = oDoc.Text.createEnumeration()
+    i = 0
+    
+    While oEnum.hasMoreElements()
+        oTextElement = oEnum.nextElement()
+        
+        If oTextElement.supportsService("com.sun.star.text.Paragraph") Then
+            i = i + 1
+            If (i Mod 2) <> 0 Then
+                oTextElement.ParaStyleName = styleOdd
+            Else
+                oTextElement.ParaStyleName = styleEven
+            End If
+        End If
+    Wend
+    
+    MsgBox "Стили применены.", 64, "Готово"
+End Sub
